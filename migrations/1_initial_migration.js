@@ -1,5 +1,5 @@
-const TronNFTCollection = artifacts.require("TronNFTCollection");
+const Migrations = artifacts.require("Migrations");
 
-module.exports = function(deployer) {
-  deployer.deploy(TronNFTCollection, "TronNFT", "TNFT", "https://your-metadata-base-uri/");
+module.exports = function (deployer) {
+    deployer.deploy(Migrations);
 };
