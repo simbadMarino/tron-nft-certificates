@@ -20,6 +20,13 @@ This project is an NFT (Non-Fungible Token) collection built on the Tron blockch
 
 ## Usage
 To start the application and deploy contracts using TronBox, run:
+Create a .env file and add your private key:
+
+```bash
+PRIVATE_KEY=your-private-key-here
+```
+
+Run the migration:
 ```bash
 tronbox migrate --network development
 ```
