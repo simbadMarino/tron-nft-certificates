@@ -1,101 +1,271 @@
-import Image from "next/image";
+'use client'
 
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
+import { Button } from './components/ui/button'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
+declare global {
+  interface Window {
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tronWeb: any
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tronLink: any
+  }
+}
+
+interface WalletInfo {
+  address: string
+  balance: string
+  network: string
+}
+
+interface NetworkStatus {
+  message: string
+  type: 'success' | 'error' | 'warning' | ''
+}
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [isConnected, setIsConnected] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [isTronLinkInstalled, setIsTronLinkInstalled] = useState(false)
+  const [status, setStatus] = useState<NetworkStatus>({ message: '', type: '' })
+  const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+  const getNetworkName = (fullNodeHost: string): string => {
+    if (fullNodeHost.includes('shasta')) return 'Shasta Testnet'
+    if (fullNodeHost.includes('nile')) return 'Nile Testnet'
+    return 'Mainnet'
+  }
+
+  const updateWalletInfo = useCallback(async () => {
+    if (!window.tronWeb?.ready) return
+
+    try {
+      const address = window.tronWeb.defaultAddress.base58
+      const balanceInSun = await window.tronWeb.trx.getBalance(address)
+      const balance = (balanceInSun / 1000000).toFixed(6)
+      const network = getNetworkName(window.tronWeb.fullNode.host)
+
+      if (walletInfo && walletInfo.network !== network) {
+        setStatus({
+          message: `Network switched to ${network}`,
+          type: 'warning'
+        })
+      }
+
+      setWalletInfo({
+        address,
+        balance,
+        network
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        setStatus({
+          message: `Error fetching wallet info: ${error.message}`,
+          type: 'error'
+        })
+      }
+    }
+  }, [walletInfo])
+
+  const checkTronLink = async () => {
+    return window.tronWeb && window.tronWeb.ready
+  }
+
+  const connectWallet = async () => {
+    if (!isTronLinkInstalled) {
+      setStatus({
+        message: 'Please install TronLink wallet!',
+        type: 'error'
+      })
+      return
+    }
+
+    try {
+      setIsConnecting(true)
+      
+      const isAlreadyConnected = await checkTronLink()
+      if (isAlreadyConnected) {
+        setIsConnected(true)
+        setStatus({
+          message: 'Already connected!',
+          type: 'success'
+        })
+        await updateWalletInfo()
+        return
+      }
+
+      await window.tronLink.request({ method: 'tron_requestAccounts' })
+      
+      const connected = await checkTronLink()
+      if (connected) {
+        setIsConnected(true)
+        setStatus({
+          message: 'Successfully connected!',
+          type: 'success'
+        })
+        await updateWalletInfo()
+      } else {
+        setStatus({
+          message: 'Connection failed. Please try again.',
+          type: 'error'
+        })
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        setStatus({
+          message: `Error connecting wallet: ${error.message}`,
+          type: 'error'
+        })
+      }
+    } finally {
+      setIsConnecting(false)
+    }
+  }
+
+  // Initial TronLink detection
+  useEffect(() => {
+    const detectTronLink = async () => {
+      let attempts = 0
+      const maxAttempts = 10
+
+      const checkForTronLink = async () => {
+        if (typeof window.tronWeb !== 'undefined') {
+          setIsTronLinkInstalled(true)
+          
+          // If TronLink is found and already authorized, connect automatically
+          if (window.tronWeb.ready) {
+            await connectWallet()
+          }
+          return true
+        }
+        return false
+      }
+
+      const attemptDetection = async () => {
+        const detected = await checkForTronLink()
+        if (!detected && attempts < maxAttempts) {
+          attempts++
+          setTimeout(attemptDetection, 500)
+        }
+      }
+
+      await attemptDetection()
+    }
+
+    detectTronLink()
+  }, [])
+
+  // Handle wallet events
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleMessage = async (e: MessageEvent) => {
+      if (e.data.message?.action === 'setAccount' || e.data.message?.action === 'setNode') {
+        await updateWalletInfo()
+      }
+
+      if (e.data.message?.action === 'disconnect') {
+        setIsConnected(false)
+        setWalletInfo(null)
+        setStatus({
+          message: 'Wallet disconnected',
+          type: 'warning'
+        })
+      }
+
+      // Handle wallet unlock
+      if (e.data.message?.action === 'unlock') {
+        await connectWallet()
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [updateWalletInfo])
+
+  const getStatusColor = (type: string) => {
+    switch (type) {
+      case 'success':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'error':
+        return 'bg-red-100 text-red-800 border-red-200'
+      case 'warning':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      default:
+        return ''
+    }
+  }
+
+  const getButtonText = () => {
+    if (!isTronLinkInstalled) return 'Install TronLink'
+    if (isConnecting) return 'Connecting...'
+    if (isConnected) return 'Connected'
+    return 'Connect TronLink'
+  }
+
+  const handleButtonClick = () => {
+    if (!isTronLinkInstalled) {
+      window.open('https://chrome.google.com/webstore/detail/tronlink/ibnejdfjmmkpcnlpebklmnkoeoihofec', '_blank')
+    } else {
+      connectWallet()
+    }
+  }
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl">TronLink Connector</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center gap-4">
+            <Button
+              onClick={handleButtonClick}
+              disabled={isConnected || isConnecting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {getButtonText()}
+            </Button>
+
+            {status.message && (
+              <div
+                className={`p-3 rounded-lg w-full text-sm border flex items-center gap-2 ${getStatusColor(
+                  status.type
+                )}`}
+              >
+                {status.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4" />
+                ) : (
+                  <AlertCircle className="w-4 h-4" />
+                )}
+                {status.message}
+              </div>
+            )}
+
+            {walletInfo && (
+              <div className="w-full space-y-3 bg-gray-50 p-4 rounded-lg border">
+                <div>
+                  <strong className="text-sm text-gray-600">Network</strong>
+                  <p className="font-medium">{walletInfo.network}</p>
+                </div>
+                <div>
+                  <strong className="text-sm text-gray-600">Address</strong>
+                  <p className="font-medium text-sm break-all">{walletInfo.address}</p>
+                </div>
+                <div>
+                  <strong className="text-sm text-gray-600">Balance</strong>
+                  <p className="font-medium">{walletInfo.balance} TRX</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </main>
+  )
 }
