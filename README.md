@@ -21,7 +21,7 @@ This project is an NFT (Non-Fungible Token) collection built on the Tron blockch
 ## Usage
 To start the application and deploy contracts using TronBox, run:
 ```bash
-ronbox migrate --network development
+tronbox migrate --network development
 ```
 
 ## Contributing
