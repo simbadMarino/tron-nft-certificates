@@ -4,11 +4,12 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 
-contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable {
+contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable {
     mapping(uint256 => string) private _certificateURIs; // Mapping for storing certificate URIs
 
-    constructor(address _owner) ERC721("MyToken", "MTK") ERC721URIStorage() Ownable(_owner) {}
+    constructor(address _owner) ERC721("Tron NFT Collection", "TNC") ERC721URIStorage() Ownable(_owner) {}
 
     function safeMint(address to, uint256 tokenId, string memory uri) public onlyOwner {
         require(bytes(uri).length > 0, "Invalid URI");
