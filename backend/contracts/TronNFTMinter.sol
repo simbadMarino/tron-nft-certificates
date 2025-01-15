@@ -20,6 +20,10 @@ contract TronNFTMinter is Ownable, ReentrancyGuard {
     // Admin function to add addresses to the whitelist
     function addToWhitelist(address[] calldata accounts) external onlyOwner {
         for (uint256 i = 0; i < accounts.length; i++) {
+            // Check if the address is not already whitelisted
+            require(!whitelistedAddresses[accounts[i]], "Address is already whitelisted");
+
+            // Add the address to the whitelist
             whitelistedAddresses[accounts[i]] = true;
             emit AddressWhitelisted(accounts[i]);
         }
@@ -28,6 +32,10 @@ contract TronNFTMinter is Ownable, ReentrancyGuard {
     // Admin function to remove addresses from the whitelist
     function removeFromWhitelist(address[] calldata accounts) external onlyOwner {
         for (uint256 i = 0; i < accounts.length; i++) {
+            // Check if the address is whitelisted
+            require(whitelistedAddresses[accounts[i]], "Address is not whitelisted");
+
+            // Remove the address from the whitelist
             whitelistedAddresses[accounts[i]] = false;
             emit AddressRemovedFromWhitelist(accounts[i]);
         }
