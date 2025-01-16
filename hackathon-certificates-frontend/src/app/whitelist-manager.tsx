@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { Button } from './components/ui/button'
 import Link from 'next/link'
-import { Loader2 } from 'lucide-react'
+import { Loader2,Upload } from 'lucide-react'
 
 interface WhitelistManagerProps {
     contractAddress: string
@@ -121,11 +121,11 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
             {/* Manual Address Input */}
             <div className="flex gap-2">
                 <input
-                    placeholder="Tron Address"
+                    placeholder="address"
                     type="text"
                     value={manualAddress}
                     onChange={(e) => setManualAddress(e.target.value)}
-                    className="flex-1 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="flex-1 p-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <Button
                     onClick={handleAddAddress}
@@ -137,14 +137,20 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
             </div>
 
             {/* CSV Upload */}
-            <div className="flex items-center w-full">
-                <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileUpload}
-                    className="flex-1 w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    disabled={isProcessing}
-                />
+            <div className="flex items-center gap-4">
+                <label className="flex-1">
+                    <input
+                        type="file"
+                        accept=".csv"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        disabled={isProcessing}
+                    />
+                    <div className="flex flec-col items-center justify-center h-48 p-3 rounded-lg border border-2 border-dashed border-gray-300 cursor-pointer transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <Upload className="h-5 w-5" />
+                        <span className="ml-2 text-gray-600">Upload CSV File</span>
+                    </div>
+                </label>
             </div>
             {/* Address List */}
             {addresses.length > 0 && (
@@ -159,46 +165,41 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
                     />
                 </div>
             )}
-            <div className="mt-4">
-            {/* Error/Success Messages */}
-            {error && (
-                <Link
-                    href={`${error}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm py-2 px-4 bg-red-500 text-white rounded-[100vw] hover:bg-red-600 transition duration-300 mt-4"
-                >
-                    View Transaction
-                </Link>
-            )}
+            <div>
+                {/* Error/Success Messages */}
+                {error && (
+                    <p className="text-sm text-red-500">
+                        {error}
+                    </p>
+                )}
 
-            {success && (
-                <Link
-                    href={`${success}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm py-2 px-4 bg-red-500 text-white rounded-[100vw] hover:bg-red-600 transition duration-300 mt-4"
-                >
-                    View Transaction
-                </Link>
-            )}
-        </div>
+                {success && (
+                    <Link
+                        href={`${success}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm py-2 px-4 bg-red-500 text-white rounded-[100vw] hover:bg-red-600 transition duration-300 mt-4"
+                    >
+                        View Transaction
+                    </Link>
+                )}
+            </div>
 
-            {/* Submit Button */ }
-    <Button
-        onClick={handleSubmit}
-        disabled={isProcessing || addresses.length === 0}
-        className="w-full bg-green-500 hover:bg-green-600 transition duration-300"
-    >
-        {isProcessing ? (
-            <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-            </>
-        ) : (
-            'Submit Addresses to Whitelist'
-        )}
-    </Button>
+            {/* Submit Button */}
+            <Button
+                onClick={handleSubmit}
+                disabled={isProcessing || addresses.length === 0}
+                className="w-full bg-green-500 hover:bg-green-600 transition duration-300"
+            >
+                {isProcessing ? (
+                    <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                    </>
+                ) : (
+                    'Submit Addresses to Whitelist'
+                )}
+            </Button>
         </div >
     );
 };
