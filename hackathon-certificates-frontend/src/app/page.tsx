@@ -5,12 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { Button } from './components/ui/button'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
+const CONTRACT_ADDRESS = "TGC9gJg1MiG1cE3kRviRf7AqjWnS7pfUDg";
+const WALLET_CONNECTED_KEY = 'tronlink_connected'
+const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tronWeb: any
+    tronWeb?: any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tronLink: any
+    tronLink?: any
   }
 }
 
@@ -18,15 +21,13 @@ interface WalletInfo {
   address: string
   balance: string
   network: string
+  isOwner?: boolean
 }
 
 interface NetworkStatus {
   message: string
   type: 'success' | 'error' | 'warning' | ''
 }
-
-const WALLET_CONNECTED_KEY = 'tronlink_connected'
-const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false)
@@ -50,14 +51,19 @@ export default function Home() {
       const balanceInSun = await window.tronWeb.trx.getBalance(address)
       const balance = (balanceInSun / 1000000).toFixed(6)
       const network = getNetworkName(window.tronWeb.fullNode.host)
+      const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS);
+      const owner = await contract.owner().call();
+      const normalizedOwner = window.tronWeb.address.fromHex(owner);
 
       localStorage.setItem(LAST_CONNECTED_ADDRESS, address)
 
       setWalletInfo({
         address,
         balance,
-        network
-      })
+        network,
+        isOwner: normalizedOwner === address,
+      });
+
     } catch (error) {
       console.error('Error updating wallet info:', error)
       if (error instanceof Error) {
@@ -208,6 +214,11 @@ export default function Home() {
                   <strong className="text-sm text-gray-600">Balance</strong>
                   <p className="font-medium">{walletInfo.balance} TRX</p>
                 </div>
+                {walletInfo.isOwner && (
+                  <div className="pt-4 border-t">
+                    <p className="text-sm font-medium text-green-600">You are the contract owner</p>
+                  </div>
+                )}
                 <Button
                   onClick={handleDisconnect}
                   className="bg-red-600 hover:bg-red-700 text-white"
