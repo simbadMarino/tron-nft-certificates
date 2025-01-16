@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { Button } from './components/ui/button'
-import { AlertCircle, CheckCircle2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
 
 const CONTRACT_ADDRESS = "TGC9gJg1MiG1cE3kRviRf7AqjWnS7pfUDg";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
 const LAST_CONNECTED_ADDRESS = 'tronlink_address'
+
 declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,11 +23,15 @@ interface WalletInfo {
   balance: string
   network: string
   isOwner?: boolean
+  contractStatus?: {
+    isAvailable: boolean
+    message: string
+  }
 }
 
 interface NetworkStatus {
   message: string
-  type: 'success' | 'error' | 'warning' | ''
+  type: 'success' | 'error' | 'warning' | 'info' | ''
 }
 
 export default function Home() {
@@ -51,18 +56,54 @@ export default function Home() {
       const balanceInSun = await window.tronWeb.trx.getBalance(address)
       const balance = (balanceInSun / 1000000).toFixed(6)
       const network = getNetworkName(window.tronWeb.fullNode.host)
-      const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS);
-      const owner = await contract.owner().call();
-      const normalizedOwner = window.tronWeb.address.fromHex(owner);
-
-      localStorage.setItem(LAST_CONNECTED_ADDRESS, address)
-
-      setWalletInfo({
+      
+      // Basic wallet info update
+      const basicWalletInfo = {
         address,
         balance,
         network,
-        isOwner: normalizedOwner === address,
-      });
+        isOwner: false,
+        contractStatus: {
+          isAvailable: false,
+          message: ''
+        }
+      }
+
+      // Only try to interact with contract if we're on Nile network
+      if (network === 'Nile Testnet') {
+        try {
+          const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS)
+          const owner = await contract.owner().call()
+          const normalizedOwner = window.tronWeb.address.fromHex(owner)
+          
+          basicWalletInfo.isOwner = normalizedOwner === address
+          basicWalletInfo.contractStatus = {
+            isAvailable: true,
+            message: 'Contract connected successfully'
+          }
+        } catch (contractError) {
+          basicWalletInfo.contractStatus = {
+            isAvailable: false,
+            message: 'Contract not found on Nile Testnet' + contractError 
+          }
+        }
+      } else {
+        basicWalletInfo.contractStatus = {
+          isAvailable: false,
+          message: 'Contract is only available on Nile Testnet'
+        }
+      }
+
+      localStorage.setItem(LAST_CONNECTED_ADDRESS, address)
+      setWalletInfo(basicWalletInfo)
+      
+      // Only show warning for contract issues if we're connected
+      if (isConnected && !basicWalletInfo.contractStatus.isAvailable) {
+        setStatus({
+          message: basicWalletInfo.contractStatus.message,
+          type: 'warning'
+        })
+      }
 
     } catch (error) {
       console.error('Error updating wallet info:', error)
@@ -73,7 +114,7 @@ export default function Home() {
         })
       }
     }
-  }, [])
+  }, [isConnected])
 
   const connectWallet = async () => {
     if (!isTronLinkInstalled) {
@@ -188,14 +229,23 @@ export default function Home() {
 
             {status.message && (
               <div
-                className={`p-3 rounded-lg w-full text-sm border flex items-center gap-2 ${status.type === 'success'
+                className={`p-3 rounded-lg w-full text-sm border flex items-center gap-2 ${
+                  status.type === 'success'
                     ? 'bg-green-100 text-green-800 border-green-200'
                     : status.type === 'error'
-                      ? 'bg-red-100 text-red-800 border-red-200'
-                      : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                  }`}
+                    ? 'bg-red-100 text-red-800 border-red-200'
+                    : status.type === 'info'
+                    ? 'bg-blue-100 text-blue-800 border-blue-200'
+                    : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                }`}
               >
-                {status.type === 'success' ? <CheckCircle2 /> : <AlertCircle />}
+                {status.type === 'success' ? (
+                  <CheckCircle2 className="h-5 w-5" />
+                ) : status.type === 'info' ? (
+                  <Info className="h-5 w-5" />
+                ) : (
+                  <AlertCircle className="h-5 w-5" />
+                )}
                 {status.message}
               </div>
             )}
@@ -214,20 +264,32 @@ export default function Home() {
                   <strong className="text-sm text-gray-600">Balance</strong>
                   <p className="font-medium">{walletInfo.balance} TRX</p>
                 </div>
-                {walletInfo.isOwner && (
-                  <div className="pt-4 border-t">
-                    <p className="text-sm font-medium text-green-600">You are the contract owner</p>
+                
+                {walletInfo.contractStatus && (
+                  <div className={`pt-4 border-t ${
+                    walletInfo.contractStatus.isAvailable 
+                      ? 'text-green-600' 
+                      : 'text-yellow-600'
+                  }`}>
+                    <p className="text-sm font-medium">
+                      {walletInfo.contractStatus.message}
+                    </p>
+                    {walletInfo.isOwner && (
+                      <p className="text-sm font-medium text-green-600 mt-2">
+                        You are the contract owner
+                      </p>
+                    )}
                   </div>
                 )}
+
                 <Button
                   onClick={handleDisconnect}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
                 >
                   Disconnect
                 </Button>
               </div>
             )}
-
           </div>
         </CardContent>
       </Card>
