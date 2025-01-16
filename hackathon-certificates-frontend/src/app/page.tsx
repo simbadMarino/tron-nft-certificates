@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { Button } from './components/ui/button'
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
+import WhitelistManager from './whitelist-manager'
+import Image from 'next/image'
 
 const CONTRACT_ADDRESS = "TGC9gJg1MiG1cE3kRviRf7AqjWnS7pfUDg";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
@@ -56,7 +58,7 @@ export default function Home() {
       const balanceInSun = await window.tronWeb.trx.getBalance(address)
       const balance = (balanceInSun / 1000000).toFixed(6)
       const network = getNetworkName(window.tronWeb.fullNode.host)
-      
+
       // Basic wallet info update
       const basicWalletInfo = {
         address,
@@ -75,7 +77,7 @@ export default function Home() {
           const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS)
           const owner = await contract.owner().call()
           const normalizedOwner = window.tronWeb.address.fromHex(owner)
-          
+
           basicWalletInfo.isOwner = normalizedOwner === address
           basicWalletInfo.contractStatus = {
             isAvailable: true,
@@ -84,7 +86,7 @@ export default function Home() {
         } catch (contractError) {
           basicWalletInfo.contractStatus = {
             isAvailable: false,
-            message: 'Contract not found on Nile Testnet' + contractError 
+            message: 'Contract not found on Nile Testnet' + contractError
           }
         }
       } else {
@@ -96,7 +98,7 @@ export default function Home() {
 
       localStorage.setItem(LAST_CONNECTED_ADDRESS, address)
       setWalletInfo(basicWalletInfo)
-      
+
       // Only show warning for contract issues if we're connected
       if (isConnected && !basicWalletInfo.contractStatus.isAvailable) {
         setStatus({
@@ -212,32 +214,40 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 p-4">
-      <Card className="w-full max-w-md">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 p-4">
+      <Card className="w-full max-w-lg">
         <CardHeader>
-          <CardTitle className="text-center text-2xl">TronLink Connector</CardTitle>
+          <CardTitle className="text-center text-2xl">
+            <Image
+              src="/tron-logo.jpeg"
+              alt="Tron Logo"
+              width={32}
+              height={32}
+              className="mr-2 inline-block"
+            />
+            Tron NFTs Collection
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-4">
-            <Button
+            {isConnected ? null : <Button
               onClick={handleButtonClick}
               disabled={isConnected || isConnecting || isInitializing}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               {getButtonText()}
-            </Button>
+            </Button>}
 
             {status.message && (
               <div
-                className={`p-3 rounded-lg w-full text-sm border flex items-center gap-2 ${
-                  status.type === 'success'
+                className={`p-3 rounded-lg w-full text-sm border flex items-center gap-2 ${status.type === 'success'
                     ? 'bg-green-100 text-green-800 border-green-200'
                     : status.type === 'error'
-                    ? 'bg-red-100 text-red-800 border-red-200'
-                    : status.type === 'info'
-                    ? 'bg-blue-100 text-blue-800 border-blue-200'
-                    : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                }`}
+                      ? 'bg-red-100 text-red-800 border-red-200'
+                      : status.type === 'info'
+                        ? 'bg-blue-100 text-blue-800 border-blue-200'
+                        : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                  }`}
               >
                 {status.type === 'success' ? (
                   <CheckCircle2 className="h-5 w-5" />
@@ -251,35 +261,28 @@ export default function Home() {
             )}
 
             {walletInfo && (
-              <div className="w-full space-y-3 bg-gray-50 p-4 rounded-lg border">
+              <div className="w-full space-y-4 bg-gray-50 p-4 rounded-lg border">
                 <div>
                   <strong className="text-sm text-gray-600">Network</strong>
                   <p className="font-medium">{walletInfo.network}</p>
                 </div>
                 <div>
                   <strong className="text-sm text-gray-600">Address</strong>
-                  <p className="font-medium text-sm break-all">{walletInfo.address}</p>
+                  <p className="font-medium text-sm break-all">
+                    {walletInfo.address}
+                    <span className="ml-2 text-white bg-red-600 px-2 py-1 rounded-[100vw] text-xs">
+                      {walletInfo.isOwner ? 'Admin' : 'User'}
+                    </span>
+                  </p>
                 </div>
                 <div>
                   <strong className="text-sm text-gray-600">Balance</strong>
                   <p className="font-medium">{walletInfo.balance} TRX</p>
                 </div>
-                
-                {walletInfo.contractStatus && (
-                  <div className={`pt-4 border-t ${
-                    walletInfo.contractStatus.isAvailable 
-                      ? 'text-green-600' 
-                      : 'text-yellow-600'
-                  }`}>
-                    <p className="text-sm font-medium">
-                      {walletInfo.contractStatus.message}
-                    </p>
-                    {walletInfo.isOwner && (
-                      <p className="text-sm font-medium text-green-600 mt-2">
-                        You are the contract owner
-                      </p>
-                    )}
-                  </div>
+
+                {/* Render WhitelistManager if user is contract owner and contract is available */}
+                {walletInfo.isOwner && walletInfo.contractStatus?.isAvailable && (
+                  <WhitelistManager contractAddress={CONTRACT_ADDRESS} />
                 )}
 
                 <Button
