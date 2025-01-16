@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { Button } from './components/ui/button'
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
-import WhitelistManager from './whitelist-manager'
 import Image from 'next/image'
+import WhitelistManager from './whitelist-manager'
 
 const CONTRACT_ADDRESS = "TGC9gJg1MiG1cE3kRviRf7AqjWnS7pfUDg";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
@@ -25,6 +25,7 @@ interface WalletInfo {
   balance: string
   network: string
   isOwner?: boolean
+  isWhitelisted?: boolean
   contractStatus?: {
     isAvailable: boolean
     message: string
@@ -36,6 +37,11 @@ interface NetworkStatus {
   type: 'success' | 'error' | 'warning' | 'info' | ''
 }
 
+interface MintingForm {
+  tokenId: string
+  tokenUri: string
+}
+
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
@@ -43,6 +49,11 @@ export default function Home() {
   const [status, setStatus] = useState<NetworkStatus>({ message: '', type: '' })
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
+  const [isMinting, setIsMinting] = useState(false)
+  const [mintingForm, setMintingForm] = useState<MintingForm>({
+    tokenId: '',
+    tokenUri: ''
+  })
 
   const getNetworkName = (fullNodeHost: string): string => {
     if (fullNodeHost.includes('shasta')) return 'Shasta Testnet'
@@ -59,26 +70,29 @@ export default function Home() {
       const balance = (balanceInSun / 1000000).toFixed(6)
       const network = getNetworkName(window.tronWeb.fullNode.host)
 
-      // Basic wallet info update
       const basicWalletInfo = {
         address,
         balance,
         network,
         isOwner: false,
+        isWhitelisted: false,
         contractStatus: {
           isAvailable: false,
           message: ''
         }
       }
 
-      // Only try to interact with contract if we're on Nile network
       if (network === 'Nile Testnet') {
         try {
           const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS)
           const owner = await contract.owner().call()
           const normalizedOwner = window.tronWeb.address.fromHex(owner)
 
+          // Check if address is whitelisted
+          const isWhitelisted = await contract.isWhitelisted(address).call()
+
           basicWalletInfo.isOwner = normalizedOwner === address
+          basicWalletInfo.isWhitelisted = isWhitelisted
           basicWalletInfo.contractStatus = {
             isAvailable: true,
             message: 'Contract connected successfully'
@@ -99,7 +113,6 @@ export default function Home() {
       localStorage.setItem(LAST_CONNECTED_ADDRESS, address)
       setWalletInfo(basicWalletInfo)
 
-      // Only show warning for contract issues if we're connected
       if (isConnected && !basicWalletInfo.contractStatus.isAvailable) {
         setStatus({
           message: basicWalletInfo.contractStatus.message,
@@ -117,6 +130,45 @@ export default function Home() {
       }
     }
   }, [isConnected])
+
+  const handleMint = async () => {
+    if (!window.tronWeb?.ready || !walletInfo?.contractStatus?.isAvailable) return
+
+    try {
+      setIsMinting(true)
+      setStatus({ message: 'Initiating minting process...', type: 'info' })
+
+      const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS)
+
+      // Convert tokenId to number and validate
+      const tokenId = parseInt(mintingForm.tokenId)
+      if (isNaN(tokenId)) {
+        throw new Error('Invalid Token ID')
+      }
+
+      // Call mintNFT function
+      const transaction = await contract.mintNFT(tokenId, mintingForm.tokenUri).send()
+
+      console.log('Transaction:', transaction)
+
+      setStatus({
+        message: 'NFT minted successfully!',
+        type: 'success'
+      })
+
+      // Reset form
+      setMintingForm({ tokenId: '', tokenUri: '' })
+
+    } catch (error) {
+      console.error('Minting error:', error)
+      setStatus({
+        message: error instanceof Error ? error.message : 'Failed to mint NFT',
+        type: 'error'
+      })
+    } finally {
+      setIsMinting(false)
+    }
+  }
 
   const connectWallet = async () => {
     if (!isTronLinkInstalled) {
@@ -271,7 +323,7 @@ export default function Home() {
                   <p className="font-medium text-sm break-all">
                     {walletInfo.address}
                     <span className="ml-2 text-white bg-red-600 px-2 py-1 rounded-[100vw] text-xs">
-                      {walletInfo.isOwner ? 'Admin' : 'User'}
+                      {walletInfo.isOwner ? 'Admin' : walletInfo.isWhitelisted ? 'Whitelisted' : 'User'}
                     </span>
                   </p>
                 </div>
@@ -280,7 +332,35 @@ export default function Home() {
                   <p className="font-medium">{walletInfo.balance} TRX</p>
                 </div>
 
-                {/* Render WhitelistManager if user is contract owner and contract is available */}
+                {/* Minting Form for whitelisted users or admin */}
+                {(walletInfo.isWhitelisted || walletInfo.isOwner) && walletInfo.contractStatus?.isAvailable && (
+                  <div className="space-y-4 mt-6 p-6 rounded-lg shadow-lg border border-red-600">
+                    <h3 className="text-xl font-bold">🚀 Mint NFT</h3>
+                    <input
+                      type="number"
+                      placeholder="Token ID"
+                      value={mintingForm.tokenId}
+                      onChange={(e) => setMintingForm(prev => ({ ...prev, tokenId: e.target.value }))}
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-300 bg-gray-50 text-gray-800 placeholder-gray-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Token URI"
+                      value={mintingForm.tokenUri}
+                      onChange={(e) => setMintingForm(prev => ({ ...prev, tokenUri: e.target.value }))}
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-300 bg-gray-50 text-gray-800 placeholder-gray-400"
+                    />
+                    <Button
+                      onClick={handleMint}
+                      disabled={isMinting || !mintingForm.tokenId || !mintingForm.tokenUri}
+                      className="w-full bg-green-500 hover:bg-green-700 text-white"
+                    >
+                      {isMinting ? 'Minting...' : 'Mint NFT'}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Whitelist Manager Component */}
                 {walletInfo.isOwner && walletInfo.contractStatus?.isAvailable && (
                   <WhitelistManager contractAddress={CONTRACT_ADDRESS} />
                 )}
