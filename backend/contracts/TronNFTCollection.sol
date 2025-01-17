@@ -5,8 +5,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable {
+contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable, AccessControl {
     mapping(uint256 => string) private _certificateURIs; // Mapping for storing certificate URIs
 
     constructor(address _owner) ERC721("Tron NFT Collection", "TNC") ERC721URIStorage() Ownable(_owner) {}
@@ -36,7 +37,7 @@ contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable 
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC721URIStorage)
+        override(ERC721, ERC721URIStorage, AccessControl)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

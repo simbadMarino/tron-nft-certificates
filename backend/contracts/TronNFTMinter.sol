@@ -5,7 +5,9 @@ import "./TronNFTCollection.sol"; // Import the NFT contract
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract TronNFTMinter is Ownable, ReentrancyGuard {
+import "@openzeppelin/contracts/access/AccessControl.sol";
+
+contract TronNFTMinter is Ownable, ReentrancyGuard, AccessControl {
     TronNFTCollection private nftContract; // Instance of the TronNFTCollection contract
     mapping(address => bool) private whitelistedAddresses; // Whitelist for eligible accounts
 
