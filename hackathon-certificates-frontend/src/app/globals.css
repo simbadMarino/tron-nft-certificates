@@ -45,3 +45,23 @@
     --input: 217.2 32.6% 17.5%;
   }
 }
+
+/* Add this to your globals.css file */
+@keyframes glow {
+  0% {
+    opacity: 0.05;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+  100% {
+    opacity: 0.05;
+    filter: brightness(1);
+  }
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
