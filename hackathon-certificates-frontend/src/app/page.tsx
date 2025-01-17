@@ -333,7 +333,7 @@ export default function Home() {
                 </div>
 
                 {/* Minting Form for whitelisted users or admin */}
-                {(walletInfo.isWhitelisted) && walletInfo.contractStatus?.isAvailable && (
+                {walletInfo?.isWhitelisted && walletInfo.contractStatus?.isAvailable && (
                   <div className="space-y-4 mt-6 p-6 rounded-lg shadow-lg border border-red-600">
                     <h3 className="text-xl font-bold">🚀 Mint NFT</h3>
                     <input
