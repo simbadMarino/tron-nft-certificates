@@ -8,11 +8,21 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable, AccessControl {
-    mapping(uint256 => string) private _certificateURIs; // Mapping for storing certificate URIs
+    mapping(uint256 => string) private _certificateURIs; // Mapping for storing 
+    mapping(address => bool) private _allowedMinters;
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    constructor(address _owner) ERC721("Tron NFT Collection", "TNC") ERC721URIStorage() Ownable(_owner) {}
+    constructor(address _owner) ERC721("Tron NFT Collection", "TNC") ERC721URIStorage() Ownable(_owner) {
+        _grantRole(ADMIN_ROLE, msg.sender); // Assign the deployer as the admin
+    }
 
-    function safeMint(address to, uint256 tokenId, string memory uri) public onlyOwner {
+    modifier onlyAdmin() {
+        require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
+        _;
+    }
+
+    function safeMint(address to, uint256 tokenId, string memory uri) external {
+        require(_allowedMinters[msg.sender], "Not allowed to mint");
         require(bytes(uri).length > 0, "Invalid URI");
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
@@ -41,5 +51,29 @@ contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable,
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    function addMinter(address minter) external onlyAdmin {
+        //check if the address is not already a minter
+        require(!_allowedMinters[minter], "Address already a minter");
+        _allowedMinters[minter] = true;
+    }
+
+    function removeMinter(address minter) external onlyAdmin {
+        //check if the address is a minter
+        require(_allowedMinters[minter], "Address is not a minter");
+        _allowedMinters[minter] = false;
+    }
+
+    function isMinter(address minter) public view returns (bool) {
+        return _allowedMinters[minter];
+    }
+
+    function uploadCertificateURI(uint256 tokenId, string memory uri) external onlyAdmin {
+        //check if the URI is valid
+        require(bytes(uri).length > 0, "Invalid URI");
+        //check if the token ID exists
+        require(bytes(_certificateURIs[tokenId]).length > 0, "Token ID already minted");
+        _certificateURIs[tokenId] = uri;
     }
 }
