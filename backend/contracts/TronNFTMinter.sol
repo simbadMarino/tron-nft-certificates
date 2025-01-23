@@ -71,7 +71,7 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
         require(bytes(uri).length > 0, "Invalid URI");
 
         // Mint the NFT via the linked TronNFTCollection contract
-        nftContract.safeMint(msg.sender, tokenId, uri);
+        nftContract.safeMint();
 
         emit NFTMinted(msg.sender, tokenId, uri);
     }
