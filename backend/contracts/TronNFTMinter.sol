@@ -25,16 +25,20 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
     }
 
     // Admin function to add addresses to the whitelist
-    function addToWhitelist(address[] calldata accounts) external onlyAdmin {
+    function addToWhitelist(
+        address[] calldata accounts,
+        string[] calldata uris
+    ) external onlyAdmin {
+        require(
+            accounts.length == uris.length,
+            "Accounts and URIs length mismatch"
+        );
         for (uint256 i = 0; i < accounts.length; i++) {
-            // Check if the address is not already whitelisted
             require(
                 !nftContract.isMinter(accounts[i]),
                 "Address is already whitelisted"
             );
-
-            // Add the address to the whitelist
-            nftContract.addMinter(accounts[i]);
+            nftContract.addMinter(accounts[i], uris[i]); // Pass the URI to addMinter
             emit AddressWhitelisted(accounts[i]);
         }
     }
@@ -44,14 +48,11 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
         address[] calldata accounts
     ) external onlyAdmin {
         for (uint256 i = 0; i < accounts.length; i++) {
-            // Check if the address is whitelisted
             require(
                 nftContract.isMinter(accounts[i]),
                 "Address is not whitelisted"
             );
-
-            // Remove the address from the whitelist
-            nftContract.removeMinter(accounts[i]);
+            nftContract.removeMinter(accounts[i]); // Remove the minter
             emit AddressRemovedFromWhitelist(accounts[i]);
         }
     }
