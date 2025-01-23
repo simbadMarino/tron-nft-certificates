@@ -21,7 +21,7 @@ contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable,
         _;
     }
 
-    function safeMint(address to, uint256 tokenId, string memory uri) external onlyAdmin {
+    function safeMint(address to, uint256 tokenId, string memory uri) external {
         require(_allowedMinters[msg.sender], "Not allowed to mint");
         require(bytes(uri).length > 0, "Invalid URI");
         _safeMint(to, tokenId);
