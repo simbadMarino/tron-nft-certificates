@@ -6,13 +6,12 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-
 contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable, AccessControl {
     mapping(uint256 => string) private _certificateURIs; // Mapping for storing 
     mapping(address => bool) private _allowedMinters;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    constructor(address _owner) ERC721("Tron NFT Collection", "TNC") ERC721URIStorage() Ownable(_owner) {
+    constructor(address _owner) ERC721("Tron NFT Collection", "TNC") ERC721URIStorage() Ownable(msg.sender) {
         _grantRole(ADMIN_ROLE, msg.sender); // Assign the deployer as the admin
     }
 
@@ -73,7 +72,6 @@ contract TronNFTCollection is ERC721, ERC721URIStorage, Ownable, ERC721Burnable,
         //check if the URI is valid
         require(bytes(uri).length > 0, "Invalid URI");
         //check if the token ID exists
-        require(bytes(_certificateURIs[tokenId]).length > 0, "Token ID already minted");
         _certificateURIs[tokenId] = uri;
     }
 }

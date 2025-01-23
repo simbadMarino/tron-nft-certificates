@@ -4,10 +4,9 @@ pragma solidity ^0.8.20;
 import "./TronNFTCollection.sol"; // Import the NFT contract
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract TronNFTMinter is  ReentrancyGuard, AccessControl {
+contract TronNFTMinter is ReentrancyGuard, AccessControl {
     TronNFTCollection private nftContract; // Instance of the TronNFTCollection contract// Whitelist for eligible accounts
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
