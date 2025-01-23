@@ -23,7 +23,7 @@ contract TronNFTCollection is
     event AddressWhitelisted(address indexed account);
     event AddressRemovedFromWhitelist(address indexed account);
     event NFTMinted(address indexed recipient, uint256 tokenId, string uri);
-
+    event CertificateUploaded(uint256 certificateId, string uri);
     constructor(
         address _owner
     )
@@ -114,5 +114,6 @@ contract TronNFTCollection is
         uint256 certificateId = _certificateIdsCounter;
         //check if the token ID exists
         _certificateURIs[certificateId] = uri;
+        emit CertificateUploaded(certificateId, uri);
     }
 }
