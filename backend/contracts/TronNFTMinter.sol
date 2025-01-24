@@ -63,16 +63,9 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
     }
 
     // Function for whitelisted users to mint their NFTs
-    function mintNFT(
-        uint256 tokenId,
-        string calldata uri
-    ) external nonReentrant {
+    function mintNFT() external nonReentrant {
         require(nftContract.isMinter(msg.sender), "Address not whitelisted");
-        require(bytes(uri).length > 0, "Invalid URI");
-
         // Mint the NFT via the linked TronNFTCollection contract
         nftContract.safeMint();
-
-        emit NFTMinted(msg.sender, tokenId, uri);
     }
 }

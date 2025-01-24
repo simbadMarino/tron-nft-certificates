@@ -14,7 +14,7 @@ contract TronNFTCollection is
     ERC721Burnable,
     AccessControl
 {
-    mapping(uint256 => string) private _certificateURIs; // Mapping for storing
+    mapping(uint256 => string) private _certificateURIs;
     mapping(address => string) private _allowedMinters;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     uint256 private _tokenIdsCounter;
