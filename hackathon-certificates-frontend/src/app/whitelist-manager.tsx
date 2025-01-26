@@ -150,7 +150,7 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
                 <Button
                     onClick={handleAddAddress}
                     disabled={isProcessing}
-                    className="bg-yellow-400 hover:bg-yellow-500 transition duration-300"
+                    className="w-full bg-gradient-to-r from-red-400 to-pink-500 text-white shadow-lg hover:bg-green-700 transition duration-300 rounded-full"
                 >
                     Add
                 </Button>
@@ -217,7 +217,7 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
             <Button
                 onClick={handleSubmit}
                 disabled={isProcessing || addresses.length === 0 || addresses.length !== uris.length}
-                className="w-full bg-green-500 hover:bg-green-600 transition duration-300"
+                className="w-full bg-gradient-to-r from-red-400 to-pink-500 text-white shadow-lg hover:bg-green-700 transition duration-300 rounded-full"
             >
                 {isProcessing ? (
                     <>

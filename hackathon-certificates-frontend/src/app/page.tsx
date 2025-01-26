@@ -341,11 +341,11 @@ export default function Home() {
                   <p className="font-medium">{walletInfo.balance} TRX</p>
                 </div>
 
-                <div className="flex space-x-4 mt-4">
+                <div className="flex space-x-2 mt-4 w-full">
                   {walletInfo?.isWhitelisted && (
                     <Button
                       onClick={() => setActiveTab('mint')}
-                      className={activeTab === 'mint' ? 'bg-green-500 text-white' : 'bg-green-200 hover:bg-green-300 text-gray-400'}
+                      className={`rounded-full transition-all duration-300 ${activeTab === 'mint' ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg' : 'bg-gradient-to-r from-green-200 to-blue-200 hover:bg-gray-300 text-gray-700'}`}
                     >
                       Mint NFT
                     </Button>
@@ -353,7 +353,7 @@ export default function Home() {
                   {walletInfo?.isAdmin && (
                     <Button
                       onClick={() => setActiveTab('whitelist')}
-                      className={activeTab === 'whitelist' ? 'bg-green-500 text-white' : 'bg-green-200 hover:bg-green-300 text-gray-400'}
+                      className={`rounded-full transition-all duration-300 ${activeTab === 'whitelist' ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg' : 'bg-gradient-to-r from-green-200 to-blue-200 hover:bg-gray-300 text-gray-700'}`}
                     >
                       Whitelist Manager
                     </Button>
@@ -361,7 +361,7 @@ export default function Home() {
                   {walletInfo?.isWhitelisted && (
                     <Button
                       onClick={() => setActiveTab('nftHistory')}
-                      className={activeTab === 'nftHistory' ? 'bg-green-500 text-white' : 'bg-green-200 hover:bg-green-300 text-gray-400'}
+                      className={`rounded-full transition-all duration-300 ${activeTab === 'nftHistory' ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg' : 'bg-gradient-to-r from-green-200 to-blue-200 hover:bg-gray-300 text-gray-700'}`}
                     >
                       NFT History
                     </Button>
@@ -374,7 +374,7 @@ export default function Home() {
                     <Button
                       onClick={handleMint}
                       disabled={isMinting}
-                      className="w-full bg-green-500 hover:bg-green-700 text-white"
+                      className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg hover:bg-green-700 text-white rounded-full transition-all duration-300"
                     >
                       {isMinting ? 'Minting...' : 'Mint NFT'}
                     </Button>
@@ -400,7 +400,7 @@ export default function Home() {
 
                 <Button
                   onClick={handleDisconnect}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300"
                 >
                   Disconnect
                 </Button>
