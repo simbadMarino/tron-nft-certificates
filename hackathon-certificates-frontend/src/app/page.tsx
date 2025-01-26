@@ -27,6 +27,7 @@ interface WalletInfo {
   network: string
   isAdmin?: boolean
   isWhitelisted?: boolean
+  hasMinted?: boolean
   contractStatus?: {
     isAvailable: boolean
     message: string
@@ -71,6 +72,7 @@ export default function Home() {
         network,
         isAdmin: false,
         isWhitelisted: false,
+        hasMinted: false,
         contractStatus: {
           isAvailable: false,
           message: ''
@@ -89,8 +91,13 @@ export default function Home() {
           const isWhitelisted = await contract.isWhitelisted(address).call()
           console.log('isWhitelisted:', isWhitelisted, 'address:', address)
 
+          // Check if address has minted a certificate
+          const hasMinted = await contract.hasMinted(address).call()
+          console.log('hasMinted:', hasMinted, 'address:', address)
+
           basicWalletInfo.isAdmin = isAdmin
           basicWalletInfo.isWhitelisted = isWhitelisted
+          basicWalletInfo.hasMinted = hasMinted
 
           basicWalletInfo.contractStatus = {
             isAvailable: true,
@@ -391,10 +398,10 @@ export default function Home() {
                     <h3 className="text-xl font-bold">🚀 Mint NFT</h3>
                     <Button
                       onClick={handleMint}
-                      disabled={isMinting}
+                      disabled={isMinting || walletInfo.hasMinted}
                       className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg hover:bg-green-700 text-white rounded-full transition-all duration-300"
                     >
-                      {isMinting ? 'Minting...' : 'Mint NFT'}
+                        {isMinting ? 'Minting...' : walletInfo.hasMinted ? 'You have already minted an NFT' : 'Mint NFT'}
                     </Button>
                   </div>
                 )}
