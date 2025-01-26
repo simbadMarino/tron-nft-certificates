@@ -56,40 +56,46 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
 
     // Handle CSV file upload
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setError('')
-        const file = event.target.files?.[0]
-        if (!file) return
-
-        const reader = new FileReader()
+        setError('');
+        const file = event.target.files?.[0];
+        if (!file) return;
+    
+        const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const text = e.target?.result as string
-                const lines = text.split(',')
-                const newAddresses = lines
-                    .map(line => line.trim())
-                    .filter(address => {
-                        if (!address) return false
-                        if (!isValidTronAddress(address)) {
-                            setError(`Invalid address format found: ${address}`)
-                            return false
-                        }
-                        return true
-                    })
-                    .filter(address => !addresses.includes(address))
-
+                const text = e.target?.result as string;
+                const lines = text.split('\n'); // Split by new line
+                const newAddresses: string[] = [];
+                const newUris: string[] = [];
+    
+                lines.forEach(line => {
+                    const [address, uri] = line.split(',').map(item => item.trim()); // Split by comma
+                    if (!address || !uri) return; // Skip if either is missing
+    
+                    if (!isValidTronAddress(address)) {
+                        setError(`Invalid address format found: ${address}`);
+                        return;
+                    }
+    
+                    if (!addresses.includes(address)) {
+                        newAddresses.push(address);
+                        newUris.push(uri);
+                    }
+                });
+    
                 if (newAddresses.length > 0) {
-                    setAddresses([...addresses, ...newAddresses])
+                    setAddresses([...addresses, ...newAddresses]);
+                    setUris([...uris, ...newUris]);
                 }
             } catch (error) {
-                console.error('Error processing CSV file:', error)
-                setError('Error processing CSV file')
+                console.error('Error processing CSV file:', error);
+                setError('Error processing CSV file');
+            } finally {
+                event.target.value = '';
             }
-            finally {
-                event.target.value = ''
-            }
-        }
-        reader.readAsText(file)
-    }
+        };
+        reader.readAsText(file);
+    };
 
     // Submit addresses to contract
     const handleSubmit = async () => {
