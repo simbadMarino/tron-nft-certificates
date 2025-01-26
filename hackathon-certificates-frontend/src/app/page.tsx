@@ -8,6 +8,7 @@ import Image from 'next/image'
 import WhitelistManager from './whitelist-manager'
 
 const CONTRACT_ADDRESS = "TYgLz2zNmhemJu85JALs5uV6AJmbkB6sgh";
+const NFT_CONTRACT_ADDRESS = "TWBJzXxJEBmyxgRY17Yy5rqrjULrprydxT";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
 const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 
@@ -45,7 +46,8 @@ export default function Home() {
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   const [isMinting, setIsMinting] = useState(false)
-  const [activeTab, setActiveTab] = useState<'mint' | 'whitelist'>('mint')
+  const [activeTab, setActiveTab] = useState<'mint' | 'whitelist' | 'nftHistory'>('mint')
+  const [nftHistory, setNftHistory] = useState<string>();
 
   const getNetworkName = (fullNodeHost: string): string => {
     if (fullNodeHost.includes('shasta')) return 'Shasta Testnet'
@@ -252,6 +254,26 @@ export default function Home() {
     }
   }
 
+  const fetchNftHistory = async () => {
+    if (!walletInfo?.address) return;
+
+    try {
+      const nftContract = await window.tronWeb.contract().at(NFT_CONTRACT_ADDRESS);
+      const tokenId = await nftContract.balanceOf(walletInfo.address).call();
+      const tokenURI = await nftContract.tokenURI(tokenId).call();
+
+      setNftHistory(tokenURI);
+    } catch (error) {
+      console.error('Error fetching NFT history:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'nftHistory') {
+      fetchNftHistory();
+    }
+  }, [activeTab]);
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-lg">
@@ -336,6 +358,14 @@ export default function Home() {
                       Whitelist Manager
                     </Button>
                   )}
+                  {walletInfo?.isWhitelisted && (
+                    <Button
+                      onClick={() => setActiveTab('nftHistory')}
+                      className={activeTab === 'nftHistory' ? 'bg-green-500 text-white' : 'bg-green-200 hover:bg-green-300 text-gray-400'}
+                    >
+                      NFT History
+                    </Button>
+                  )}
                 </div>
 
                 {activeTab === 'mint' && walletInfo?.isWhitelisted && walletInfo.contractStatus?.isAvailable && (
@@ -353,6 +383,19 @@ export default function Home() {
 
                 {activeTab === 'whitelist' && walletInfo.isAdmin && walletInfo.contractStatus?.isAvailable && (
                   <WhitelistManager contractAddress={CONTRACT_ADDRESS} />
+                )}
+
+                {activeTab === 'nftHistory' && (
+                  <div className="space-y-4 mt-6 p-4 rounded-lg shadow-lg border border-red-600">
+                    <h3 className="text-xl font-bold">🖼️ NFT History</h3>
+                    {nftHistory && (
+                      <Image src={nftHistory} alt="NFT" width={100} height={100} />
+                    )}
+
+                    {!nftHistory && (
+                      <p>No NFT history found.</p>
+                    )}
+                  </div>
                 )}
 
                 <Button
