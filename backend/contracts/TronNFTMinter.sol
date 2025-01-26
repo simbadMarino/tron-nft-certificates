@@ -11,6 +11,7 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     mapping(address => string) private _whitelist;
     uint256 private _tokenIdsCounter;
+    mapping(address => bool) private _hasMinted;
 
     event AddressWhitelisted(address indexed account);
     event AddressRemovedFromWhitelist(address indexed account);
@@ -63,21 +64,30 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
     function mintNFT() external nonReentrant {
         require(
             bytes(_whitelist[msg.sender]).length > 0,
-            "Address is not a whitelisted"
+            "Address is not whitelisted"
         );
+
+        require(!_hasMinted[msg.sender], "Address has already minted an NFT"); // Prevent further minting
 
         string memory uri = _whitelist[msg.sender]; // Get the URI associated with the minter
         require(bytes(uri).length > 0, "Invalid URI");
 
-        uint256 tokenId = _tokenIdsCounter;
         _tokenIdsCounter++;
+        uint256 tokenId = _tokenIdsCounter;
 
         // Mint the NFT via the linked TronNFTCollection contract
         nftContract.safeMint(msg.sender, tokenId, uri);
+
+        _hasMinted[msg.sender] = true;
+        emit NFTMinted(msg.sender, tokenId, uri);
     }
 
     function isWhitelisted(address account) public view returns (bool) {
         return bytes(_whitelist[account]).length > 0;
+    }
+
+    function hasMinted(address account) public view returns (bool) {
+        return _hasMinted[account];
     }
 
     // Retrieve the certificate URI for a token ID

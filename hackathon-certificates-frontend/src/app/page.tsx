@@ -7,8 +7,8 @@ import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
 import Image from 'next/image'
 import WhitelistManager from './whitelist-manager'
 
-const CONTRACT_ADDRESS = "TYgLz2zNmhemJu85JALs5uV6AJmbkB6sgh";
-const NFT_CONTRACT_ADDRESS = "TWBJzXxJEBmyxgRY17Yy5rqrjULrprydxT";
+const CONTRACT_ADDRESS = "TVRAXcVNsdkXz9cDRs9bnfYGbGkEbsmoCD";
+const NFT_CONTRACT_ADDRESS = "TX2v4hBg7A9YVrztT5LqhAGwtWQkSvt9iQ";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
 const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 
