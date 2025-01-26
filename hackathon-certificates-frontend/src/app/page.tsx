@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
 import Image from 'next/image'
 import WhitelistManager from './whitelist-manager'
 
-const CONTRACT_ADDRESS = "TGC9gJg1MiG1cE3kRviRf7AqjWnS7pfUDg";
+const CONTRACT_ADDRESS = "TYgLz2zNmhemJu85JALs5uV6AJmbkB6sgh";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
 const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 
@@ -24,7 +24,7 @@ interface WalletInfo {
   address: string
   balance: string
   network: string
-  isOwner?: boolean
+  isAdmin?: boolean
   isWhitelisted?: boolean
   contractStatus?: {
     isAvailable: boolean
@@ -37,11 +37,6 @@ interface NetworkStatus {
   type: 'success' | 'error' | 'warning' | 'info' | ''
 }
 
-interface MintingForm {
-  tokenId: string
-  tokenUri: string
-}
-
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
@@ -50,10 +45,7 @@ export default function Home() {
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   const [isMinting, setIsMinting] = useState(false)
-  const [mintingForm, setMintingForm] = useState<MintingForm>({
-    tokenId: '',
-    tokenUri: ''
-  })
+  const [activeTab, setActiveTab] = useState<'mint' | 'whitelist'>('mint')
 
   const getNetworkName = (fullNodeHost: string): string => {
     if (fullNodeHost.includes('shasta')) return 'Shasta Testnet'
@@ -74,7 +66,7 @@ export default function Home() {
         address,
         balance,
         network,
-        isOwner: false,
+        isAdmin: false,
         isWhitelisted: false,
         contractStatus: {
           isAvailable: false,
@@ -85,14 +77,18 @@ export default function Home() {
       if (network === 'Nile Testnet') {
         try {
           const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS)
-          const owner = await contract.owner().call()
-          const normalizedOwner = window.tronWeb.address.fromHex(owner)
+          const adminRole = await contract.ADMIN_ROLE().call()
+
+          // Check if address has the ADMIN_ROLE
+          const isAdmin = await contract.hasRole(adminRole, address).call()
 
           // Check if address is whitelisted
           const isWhitelisted = await contract.isWhitelisted(address).call()
+          console.log('isWhitelisted:', isWhitelisted, 'address:', address)
 
-          basicWalletInfo.isOwner = normalizedOwner === address
+          basicWalletInfo.isAdmin = isAdmin
           basicWalletInfo.isWhitelisted = isWhitelisted
+
           basicWalletInfo.contractStatus = {
             isAvailable: true,
             message: 'Contract connected successfully'
@@ -140,14 +136,8 @@ export default function Home() {
 
       const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS)
 
-      // Convert tokenId to number and validate
-      const tokenId = parseInt(mintingForm.tokenId)
-      if (isNaN(tokenId)) {
-        throw new Error('Invalid Token ID')
-      }
-
       // Call mintNFT function
-      const transaction = await contract.mintNFT(tokenId, mintingForm.tokenUri).send()
+      const transaction = await contract.mintNFT().send()
 
       console.log('Transaction:', transaction)
 
@@ -155,9 +145,6 @@ export default function Home() {
         message: 'NFT minted successfully!',
         type: 'success'
       })
-
-      // Reset form
-      setMintingForm({ tokenId: '', tokenUri: '' })
 
     } catch (error) {
       console.error('Minting error:', error)
@@ -323,7 +310,7 @@ export default function Home() {
                   <p className="font-medium text-sm break-all">
                     {walletInfo.address}
                     <span className="ml-2 text-white bg-red-600 px-2 py-1 rounded-[100vw] text-xs">
-                      {walletInfo.isOwner ? 'Admin' : walletInfo.isWhitelisted ? 'Whitelisted' : 'User'}
+                      {walletInfo.isAdmin ? 'Admin' : walletInfo.isWhitelisted ? 'Whitelisted' : 'User'}
                     </span>
                   </p>
                 </div>
@@ -332,27 +319,31 @@ export default function Home() {
                   <p className="font-medium">{walletInfo.balance} TRX</p>
                 </div>
 
-                {/* Minting Form for whitelisted users or admin */}
-                {walletInfo?.isWhitelisted && walletInfo.contractStatus?.isAvailable && (
-                  <div className="space-y-4 mt-6 p-6 rounded-lg shadow-lg border border-red-600">
+                <div className="flex space-x-4 mt-4">
+                  {walletInfo?.isWhitelisted && (
+                    <Button
+                      onClick={() => setActiveTab('mint')}
+                      className={activeTab === 'mint' ? 'bg-green-500 text-white' : 'bg-green-200 hover:bg-green-300 text-gray-400'}
+                    >
+                      Mint NFT
+                    </Button>
+                  )}
+                  {walletInfo?.isAdmin && (
+                    <Button
+                      onClick={() => setActiveTab('whitelist')}
+                      className={activeTab === 'whitelist' ? 'bg-green-500 text-white' : 'bg-green-200 hover:bg-green-300 text-gray-400'}
+                    >
+                      Whitelist Manager
+                    </Button>
+                  )}
+                </div>
+
+                {activeTab === 'mint' && walletInfo?.isWhitelisted && walletInfo.contractStatus?.isAvailable && (
+                  <div className="space-y-4 mt-6 p-4 rounded-lg shadow-lg border border-red-600">
                     <h3 className="text-xl font-bold">🚀 Mint NFT</h3>
-                    <input
-                      type="number"
-                      placeholder="Token ID"
-                      value={mintingForm.tokenId}
-                      onChange={(e) => setMintingForm(prev => ({ ...prev, tokenId: e.target.value }))}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-300 bg-gray-50 text-gray-800 placeholder-gray-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Token URI"
-                      value={mintingForm.tokenUri}
-                      onChange={(e) => setMintingForm(prev => ({ ...prev, tokenUri: e.target.value }))}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-300 bg-gray-50 text-gray-800 placeholder-gray-400"
-                    />
                     <Button
                       onClick={handleMint}
-                      disabled={isMinting || !mintingForm.tokenId || !mintingForm.tokenUri}
+                      disabled={isMinting}
                       className="w-full bg-green-500 hover:bg-green-700 text-white"
                     >
                       {isMinting ? 'Minting...' : 'Mint NFT'}
@@ -360,8 +351,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* Whitelist Manager Component */}
-                {walletInfo.isOwner && walletInfo.contractStatus?.isAvailable && (
+                {activeTab === 'whitelist' && walletInfo.isAdmin && walletInfo.contractStatus?.isAvailable && (
                   <WhitelistManager contractAddress={CONTRACT_ADDRESS} />
                 )}
 

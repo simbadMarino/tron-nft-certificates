@@ -12,6 +12,8 @@ interface WhitelistManagerProps {
 export default function WhitelistManager({ contractAddress }: WhitelistManagerProps) {
     const [addresses, setAddresses] = useState<string[]>([])
     const [manualAddress, setManualAddress] = useState('')
+    const [manualUriInput, setManualUriInput] = useState('')
+    const [uris, setUris] = useState<string[]>([])
     const [isProcessing, setIsProcessing] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
@@ -23,24 +25,33 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
 
     // Handle manual address input
     const handleAddAddress = () => {
-        setError('')
+        setError('');
         if (!manualAddress.trim()) {
-            setError('Please enter an address')
-            return
+            setError('Please enter an address');
+            return;
         }
-
+        
         if (!isValidTronAddress(manualAddress.trim())) {
-            setError('Invalid Tron address format')
-            return
+            setError('Invalid Tron address format');
+            return;
         }
-
+        
         if (addresses.includes(manualAddress.trim())) {
-            setError('Address already in list')
-            return
+            setError('Address already in list');
+            return;
+        }
+        
+        // Add corresponding URI
+        const manualUri = manualUriInput.trim();
+        if (!manualUri) {
+            setError('Please enter a URI');
+            return;
         }
 
-        setAddresses([...addresses, manualAddress.trim()])
-        setManualAddress('')
+        setAddresses([...addresses, manualAddress.trim()]);
+        setUris([...uris, manualUri]);
+        setManualAddress('');
+        setManualUriInput('');
     }
 
     // Handle CSV file upload
@@ -82,9 +93,9 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
 
     // Submit addresses to contract
     const handleSubmit = async () => {
-        if (addresses.length === 0) {
-            setError('Please add at least one address')
-            return
+        if (addresses.length === 0 || addresses.length !== uris.length) {
+            setError('Please add at least one address and ensure they match with URIs');
+            return;
         }
 
         setIsProcessing(true)
@@ -99,8 +110,9 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
             let response = 'https://nile.tronscan.org/#/transaction/'
             for (let i = 0; i < addresses.length; i += chunkSize) {
                 const chunk = addresses.slice(i, i + chunkSize)
+                const uriChunk = uris.slice(i, i + chunkSize)
                 console.log('Adding chunk:', chunk)
-                const result = await contract.addToWhitelist(chunk).send()
+                const result = await contract.addToWhitelist(chunk, uriChunk).send()
                 response += result
                 console.log('Result:', result)
             }
@@ -112,6 +124,7 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
         } finally {
             setIsProcessing(false)
             setAddresses([])
+            setUris([])
         }
     }
     return (
@@ -119,12 +132,19 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
             <h3 className="text-xl font-bold">🚀 Whitelist Manager</h3>
 
             {/* Manual Address Input */}
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
                 <input
                     placeholder="address"
                     type="text"
                     value={manualAddress}
                     onChange={(e) => setManualAddress(e.target.value)}
+                    className="flex-1 p-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <input
+                    placeholder="uri"
+                    type="text"
+                    value={manualUriInput}
+                    onChange={(e) => setManualUriInput(e.target.value)}
                     className="flex-1 p-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <Button
@@ -163,6 +183,14 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
                         readOnly
                         className="h-32 text-sm font-mono bg-gray-800 p-2 rounded-lg text-white w-full"
                     />
+                    <p className="text-sm font-medium mb-2">
+                        URIs to be added to whitelist ({uris.length}):
+                    </p>
+                    <textarea
+                        value={uris.join('\n')}
+                        readOnly
+                        className="h-32 text-sm font-mono bg-gray-800 p-2 rounded-lg text-white w-full"
+                    />
                 </div>
             )}
             <div>
@@ -188,7 +216,7 @@ export default function WhitelistManager({ contractAddress }: WhitelistManagerPr
             {/* Submit Button */}
             <Button
                 onClick={handleSubmit}
-                disabled={isProcessing || addresses.length === 0}
+                disabled={isProcessing || addresses.length === 0 || addresses.length !== uris.length}
                 className="w-full bg-green-500 hover:bg-green-600 transition duration-300"
             >
                 {isProcessing ? (
