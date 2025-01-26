@@ -48,6 +48,7 @@ export default function Home() {
   const [isMinting, setIsMinting] = useState(false)
   const [activeTab, setActiveTab] = useState<'mint' | 'whitelist' | 'nftHistory'>('mint')
   const [nftHistory, setNftHistory] = useState<string>();
+  const [showAlert, setShowAlert] = useState(false);
 
   const getNetworkName = (fullNodeHost: string): string => {
     if (fullNodeHost.includes('shasta')) return 'Shasta Testnet'
@@ -224,8 +225,13 @@ export default function Home() {
   }, [updateWalletInfo])
 
   useEffect(() => {
-    initializeWallet()
-  }, [initializeWallet])
+    initializeWallet();
+
+    // Check user status on page load
+    if (walletInfo && !walletInfo.isWhitelisted && !walletInfo.isAdmin) {
+      setShowAlert(true);
+    }
+  }, [initializeWallet, walletInfo]);
 
   const handleDisconnect = () => {
     setIsConnected(false)
@@ -302,13 +308,13 @@ export default function Home() {
             {status.message && (
               <div
                 className={`p-3 rounded-lg w-full text-sm border flex items-center gap-2 ${status.type === 'success'
-                    ? 'bg-green-100 text-green-800 border-green-200'
-                    : status.type === 'error'
-                      ? 'bg-red-100 text-red-800 border-red-200'
-                      : status.type === 'info'
-                        ? 'bg-blue-100 text-blue-800 border-blue-200'
-                        : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                  }`}
+                  ? 'bg-green-100 text-green-800 border-green-200'
+                  : status.type === 'error'
+                    ? 'bg-red-100 text-red-800 border-red-200'
+                    : status.type === 'info'
+                      ? 'bg-blue-100 text-blue-800 border-blue-200'
+                      : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                }`}
               >
                 {status.type === 'success' ? (
                   <CheckCircle2 className="h-5 w-5" />
@@ -318,6 +324,18 @@ export default function Home() {
                   <AlertCircle className="h-5 w-5" />
                 )}
                 {status.message}
+              </div>
+            )}
+
+            {showAlert && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+                  <h2 className="text-lg font-bold mb-4">Access Denied</h2>
+                  <p>You are not whitelisted and cannot mint NFTs.</p>
+                  <Button onClick={() => setShowAlert(false)} className="mt-4 bg-red-500 text-white rounded-full">
+                    Close
+                  </Button>
+                </div>
               </div>
             )}
 
