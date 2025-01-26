@@ -9,15 +9,12 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 contract TronNFTMinter is ReentrancyGuard, AccessControl {
     TronNFTCollection private nftContract; // Instance of the TronNFTCollection contract// Whitelist for eligible accounts
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    mapping(uint256 => string) private _certificateURIs;
     mapping(address => string) private _whitelist;
     uint256 private _tokenIdsCounter;
-    uint256 private _certificateIdsCounter;
 
     event AddressWhitelisted(address indexed account);
     event AddressRemovedFromWhitelist(address indexed account);
     event NFTMinted(address indexed recipient, uint256 tokenId, string uri);
-    event CertificateUploaded(uint256 indexed tokenId, string uri);
 
     constructor(address _owner) {
         nftContract = TronNFTCollection(_owner); // Link the NFT contract
@@ -79,25 +76,14 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
         nftContract.safeMint(msg.sender, tokenId, uri);
     }
 
-    // Admin function to upload a certificate URI
-    function uploadCertificateURI(string memory uri) external onlyAdmin {
-        //check if the URI is valid
-        require(bytes(uri).length > 0, "Invalid URI");
-        _certificateIdsCounter++;
-        uint256 certificateId = _certificateIdsCounter;
-        //check if the token ID exists
-        _certificateURIs[certificateId] = uri;
-        emit CertificateUploaded(certificateId, uri);
-    }
-
     function isWhitelisted(address account) public view returns (bool) {
         return bytes(_whitelist[account]).length > 0;
     }
 
     // Retrieve the certificate URI for a token ID
     function certificateURI(
-        uint256 tokenId
+        address account
     ) public view returns (string memory) {
-        return _certificateURIs[tokenId];
+        return _whitelist[account];
     }
 }
