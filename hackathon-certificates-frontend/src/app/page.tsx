@@ -314,7 +314,7 @@ export default function Home() {
                     : status.type === 'info'
                       ? 'bg-blue-100 text-blue-800 border-blue-200'
                       : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                }`}
+                  }`}
               >
                 {status.type === 'success' ? (
                   <CheckCircle2 className="h-5 w-5" />
@@ -407,7 +407,7 @@ export default function Home() {
                   <div className="space-y-4 mt-6 p-4 rounded-lg shadow-lg border border-red-600">
                     <h3 className="text-xl font-bold">🖼️ NFT History</h3>
                     {nftHistory && (
-                      <Image src={nftHistory} alt="NFT" width={100} height={100} />
+                      <Image src={nftHistory} alt="NFT" width={500} height={200} />
                     )}
 
                     {!nftHistory && (
