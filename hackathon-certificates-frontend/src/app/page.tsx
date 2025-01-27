@@ -48,7 +48,7 @@ export default function Home() {
   const [isInitializing, setIsInitializing] = useState(true)
   const [isMinting, setIsMinting] = useState(false)
   const [activeTab, setActiveTab] = useState<'mint' | 'whitelist' | 'nftHistory'>('mint')
-  const [nftHistory, setNftHistory] = useState<string>();
+
   const [showAlert, setShowAlert] = useState(false);
   const [nftURIs, setNftURIs] = useState<string[]>([]);
   const [mintedCount, setMintedCount] = useState<number>(0);
@@ -281,43 +281,11 @@ export default function Home() {
     }
   }
 
-  const fetchNftHistory = async () => {
-    if (!walletInfo?.address) return;
 
-    try {
-      const nftContract = await window.tronWeb.contract().at(NFT_CONTRACT_ADDRESS);
-      const tokenId = await nftContract.balanceOf(walletInfo.address).call();
-      const tokenURI = await nftContract.tokenURI(tokenId).call();
 
-      setNftHistory(tokenURI);
-    } catch (error) {
-      console.error('Error fetching NFT history:', error);
-    }
-  };
 
-  useEffect(() => {
-    if (activeTab === 'nftHistory') {
-      fetchNftHistory();
-    }
-  }, [activeTab]);
 
-  // useEffect(() => {
-  //   const fetchNFTData = async () => {
-  //     if (!walletInfo?.address) return;
 
-  //     try {
-  //       const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS);
-  //       const uris = await contract.certificateURI(walletInfo.address); // Ensure this returns an array
-  //       const count = await contract.getMintedNFTCount(walletInfo.address); // Fetch minted count
-  //       setNftURIs(uris); // Set the state with the fetched array
-  //       setMintedCount(count);
-  //     } catch (error) {
-  //       console.error('Error fetching NFT data:', error);
-  //     }
-  //   };
-
-  //   fetchNFTData();
-  // }, [walletInfo]);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -448,13 +416,16 @@ export default function Home() {
                 {activeTab === 'nftHistory' && (
                   <div className="space-y-4 mt-6 p-4 rounded-lg shadow-lg border border-red-600">
                     <h3 className="text-xl font-bold">🖼️ NFT History</h3>
-                    {nftHistory && (
-                      <Image src={nftHistory} alt="NFT" width={500} height={200} />
-                    )}
+                    <div className="grid grid-cols-2 gap-4">
 
-                    {!nftHistory && (
-                      <p>No NFT history found.</p>
-                    )}
+                      {mintedCount > 0 ? (
+                        nftURIs.slice(0, mintedCount).map((uri, index) => (
+                          <Image key={index} src={uri} alt={`NFT ${index + 1}`} width={500} height={500} />
+                        ))
+                      ) : (
+                        <p>No NFT history found.</p>
+                      )}
+                    </div>
                   </div>
                 )}
 
