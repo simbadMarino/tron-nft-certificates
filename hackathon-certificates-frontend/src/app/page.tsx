@@ -7,8 +7,8 @@ import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
 import Image from 'next/image'
 import WhitelistManager from './whitelist-manager'
 
-const CONTRACT_ADDRESS = "TVRAXcVNsdkXz9cDRs9bnfYGbGkEbsmoCD";
-const NFT_CONTRACT_ADDRESS = "TX2v4hBg7A9YVrztT5LqhAGwtWQkSvt9iQ";
+const CONTRACT_ADDRESS = "TDsfR4qEDHsXonB1EmByhccHFHHkBHGZ3c";
+const NFT_CONTRACT_ADDRESS = "TSTpaNF5EZCZeq7VxvrsrDUwAYwExZgS7C";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
 const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 
@@ -50,6 +50,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'mint' | 'whitelist' | 'nftHistory'>('mint')
   const [nftHistory, setNftHistory] = useState<string>();
   const [showAlert, setShowAlert] = useState(false);
+  const [nftURIs, setNftURIs] = useState<string[]>([]);
+  const [mintedCount, setMintedCount] = useState<number>(0);
 
   const getNetworkName = (fullNodeHost: string): string => {
     if (fullNodeHost.includes('shasta')) return 'Shasta Testnet'
@@ -94,6 +96,18 @@ export default function Home() {
           // Check if address has minted a certificate
           const hasMinted = await contract.hasMinted(address).call()
           console.log('hasMinted:', hasMinted, 'address:', address)
+
+          const uris = await contract.certificateURI(address).call(); // Ensure this returns an array
+          console.log('uris:', uris)
+          const count = await contract.getMintedNFTCount(address).call(); // Fetch minted count
+
+          //cont is in hex
+          const countInt = parseInt(count, 16);
+          //normalize the count
+
+          console.log('count:', countInt)
+          setNftURIs(uris); // Set the state with the fetched array
+          setMintedCount(countInt);
 
           basicWalletInfo.isAdmin = isAdmin
           basicWalletInfo.isWhitelisted = isWhitelisted
@@ -287,6 +301,24 @@ export default function Home() {
     }
   }, [activeTab]);
 
+  // useEffect(() => {
+  //   const fetchNFTData = async () => {
+  //     if (!walletInfo?.address) return;
+
+  //     try {
+  //       const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS);
+  //       const uris = await contract.certificateURI(walletInfo.address); // Ensure this returns an array
+  //       const count = await contract.getMintedNFTCount(walletInfo.address); // Fetch minted count
+  //       setNftURIs(uris); // Set the state with the fetched array
+  //       setMintedCount(count);
+  //     } catch (error) {
+  //       console.error('Error fetching NFT data:', error);
+  //     }
+  //   };
+
+  //   fetchNFTData();
+  // }, [walletInfo]);
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-lg">
@@ -396,13 +428,16 @@ export default function Home() {
                 {activeTab === 'mint' && walletInfo?.isWhitelisted && walletInfo.contractStatus?.isAvailable && (
                   <div className="space-y-4 mt-6 p-4 rounded-lg shadow-lg border border-red-600">
                     <h3 className="text-xl font-bold">🚀 Mint NFT</h3>
-                    <Button
-                      onClick={handleMint}
-                      disabled={isMinting || walletInfo.hasMinted}
-                      className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg hover:bg-green-700 text-white rounded-full transition-all duration-300"
-                    >
-                        {isMinting ? 'Minting...' : walletInfo.hasMinted ? 'You have already minted an NFT' : 'Mint NFT'}
-                    </Button>
+                    {Array.isArray(nftURIs) && nftURIs.map((uri, index) => (
+                      <Button
+                        key={index}
+                        onClick={() => handleMint()} // Pass the URI to the mint function
+                        disabled={isMinting || mintedCount > index} // Disable if minted count exceeds index
+                        className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg hover:bg-green-700 text-white rounded-full transition-all duration-300"
+                      >
+                        {isMinting ? 'Minting...' : mintedCount > index ? 'You have already minted this NFT' : 'Mint NFT'}
+                      </Button>
+                    ))}
                   </div>
                 )}
 
