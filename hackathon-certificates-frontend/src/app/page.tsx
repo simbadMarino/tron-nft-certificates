@@ -400,17 +400,20 @@ export default function Home() {
                 </div>
 
                 {activeTab === 'mint' && walletInfo?.isWhitelisted && walletInfo.contractStatus?.isAvailable && (
-                  <div className="space-y-4 mt-6 p-4 rounded-lg shadow-lg border border-red-600">
-                    <h3 className="text-xl font-bold">🚀 Mint NFT</h3>
+                  <div className="grid grid-cols-2 gap-4 mt-4">
                     {Array.isArray(nftURIs) && nftURIs.map((uri, index) => (
-                      <Button
-                        key={index}
-                        onClick={() => handleMint()} // Pass the URI to the mint function
-                        disabled={isMinting || mintedCount > index} // Disable if minted count exceeds index
-                        className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg hover:bg-green-700 text-white rounded-full transition-all duration-300"
-                      >
-                        {isMinting ? 'Minting...' : mintedCount > index ? 'You have already minted this NFT' : 'Mint NFT'}
-                      </Button>
+                      <div key={index} className="relative rounded-lg overflow-hidden shadow-lg transition-transform transform hover:scale-105 h-96 duration-300">
+                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${uri})` }}></div>
+                        <div className="relative p-4 bg-black bg-opacity-50 flex items-end h-full">
+                          <Button
+                            onClick={() => handleMint()}
+                            disabled={isMinting || mintedCount > index}
+                            className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg hover:bg-green-700 rounded-full transition-all duration-300"
+                          >
+                            {isMinting ? 'Minting...' : mintedCount > index ? 'You have already minted this NFT' : 'Mint NFT'}
+                          </Button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -427,10 +430,20 @@ export default function Home() {
                   <div className="space-y-4 mt-6 p-4 rounded-lg shadow-lg border border-red-600">
                     <h3 className="text-xl font-bold">🖼️ NFT History</h3>
                     <div className="grid grid-cols-2 gap-4">
-
                       {mintedCount > 0 ? (
                         nftURIs.slice(0, mintedCount).map((uri, index) => (
-                          <Image key={index} src={uri} alt={`NFT ${index + 1}`} width={500} height={500} />
+                          <div key={index} className="relative rounded-lg overflow-hidden shadow-lg transition-transform transform hover:scale-105 duration-300">
+                            <Image
+                              src={uri}
+                              alt={`NFT ${index + 1}`}
+                              width={500}
+                              height={500}
+                              className="object-cover w-full h-64"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                              
+                            </div>
+                          </div>
                         ))
                       ) : (
                         <p>No NFT history found.</p>
