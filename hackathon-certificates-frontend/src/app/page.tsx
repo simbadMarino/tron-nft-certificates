@@ -6,9 +6,9 @@ import { Button } from './components/ui/button'
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
 import Image from 'next/image'
 import WhitelistManager from './whitelist-manager'
+import BlacklistManager from './blacklist-manager'
 
-const CONTRACT_ADDRESS = "TDsfR4qEDHsXonB1EmByhccHFHHkBHGZ3c";
-const NFT_CONTRACT_ADDRESS = "TSTpaNF5EZCZeq7VxvrsrDUwAYwExZgS7C";
+const CONTRACT_ADDRESS = "TWMTb7rKsxFPfJJvEygnZgR65CabutJC5b";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
 const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 
@@ -47,7 +47,7 @@ export default function Home() {
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   const [isMinting, setIsMinting] = useState(false)
-  const [activeTab, setActiveTab] = useState<'mint' | 'whitelist' | 'nftHistory'>('mint')
+  const [activeTab, setActiveTab] = useState<'mint' | 'whitelist' | 'blacklist' | 'nftHistory'>('mint')
 
   const [showAlert, setShowAlert] = useState(false);
   const [nftURIs, setNftURIs] = useState<string[]>([]);
@@ -282,14 +282,9 @@ export default function Home() {
   }
 
 
-
-
-
-
-
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-lg">
+      <Card className="w-full max-w-[670px]">
         <CardHeader>
           <CardTitle className="text-center text-2xl">
             <Image
@@ -383,6 +378,17 @@ export default function Home() {
                       Whitelist Manager
                     </Button>
                   )}
+
+                  {walletInfo?.isAdmin && (
+                    <Button
+                      onClick={() => setActiveTab('blacklist')}
+                      className={`rounded-full transition-all duration-300 ${activeTab === 'blacklist' ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg' : 'bg-gradient-to-r from-green-200 to-blue-200 hover:bg-gray-300 text-gray-700'}`}
+                    >
+                      Blacklist Manager
+                    </Button>
+                  )}
+
+                  
                   {walletInfo?.isWhitelisted && (
                     <Button
                       onClick={() => setActiveTab('nftHistory')}
@@ -411,6 +417,10 @@ export default function Home() {
 
                 {activeTab === 'whitelist' && walletInfo.isAdmin && walletInfo.contractStatus?.isAvailable && (
                   <WhitelistManager contractAddress={CONTRACT_ADDRESS} />
+                )}
+
+                {activeTab === 'blacklist' && walletInfo.isAdmin && walletInfo.contractStatus?.isAvailable && (
+                  <BlacklistManager contractAddress={CONTRACT_ADDRESS} />
                 )}
 
                 {activeTab === 'nftHistory' && (

@@ -17,10 +17,16 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
     event AddressWhitelisted(address indexed account);
     event AddressRemovedFromWhitelist(address indexed account);
     event NFTMinted(address indexed recipient, uint256 tokenId, string uri);
+    event AddressAdminGranted(address indexed account);
 
     constructor(address _owner) {
         nftContract = TronNFTCollection(_owner); // Link the NFT contract
         _grantRole(ADMIN_ROLE, msg.sender); // Assign the deployer as the admin
+    }
+
+    function makeUserAdmin(address account) external onlyAdmin {
+        _grantRole(ADMIN_ROLE, account);
+        emit AddressAdminGranted(account);
     }
 
     modifier onlyAdmin() {
@@ -54,6 +60,8 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
                 "Address is not whitelisted"
             );
             delete _whitelist[accounts[i]];
+            delete _nftCount[accounts[i]];
+
             emit AddressRemovedFromWhitelist(accounts[i]);
         }
     }
