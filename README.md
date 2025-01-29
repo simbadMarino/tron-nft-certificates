@@ -1,4 +1,4 @@
-# Hackathon Certificate Minting
+# Tron NFT Collection
 
 ## Description
 This project is a certificate minting application that allows users to create and manage digital certificates on the blockchain. It consists of a frontend built with Next.js and a backend that utilizes TronBox for smart contract management.
@@ -32,7 +32,7 @@ This project is a certificate minting application that allows users to create an
 ### Backend
 To deploy contracts using TronBox, run:
 ```bash
-tronbox migrate --network development
+tronbox migrate --network nile
 ```
 
 ### Frontend
