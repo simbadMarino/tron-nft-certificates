@@ -18,6 +18,12 @@ This project is a certificate minting application that allows users to create an
    npm install
    ```
 
+4. Update the .env file and Add your own private key:
+   ```bash
+   cp .env.example .env
+   ```
+   
+
 ### Frontend
 1. Navigate to the frontend directory:
    ```bash
