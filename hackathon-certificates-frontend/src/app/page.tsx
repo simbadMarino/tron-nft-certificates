@@ -192,7 +192,7 @@ export default function Home() {
 
     try {
       setIsConnecting(true)
-      await window.tronLink.request({ method: 'tron_requestAccounts' })
+      await window.tronLink?.request({ method: 'tron_requestAccounts' })
 
       const address = window.tronWeb?.defaultAddress?.base58
       if (address) {
@@ -216,43 +216,73 @@ export default function Home() {
   }
 
   const initializeWallet = useCallback(async () => {
-    if (typeof window.tronWeb !== 'undefined') {
-      setIsTronLinkInstalled(true)
+    // Wait for TronLink to inject tronWeb
+    const checkTronLink = () => {
+      if (typeof window !== 'undefined') {
+        if (window.tronWeb && window.tronLink) {
+          setIsTronLinkInstalled(true)
 
-      const wasConnected = localStorage.getItem(WALLET_CONNECTED_KEY) === 'true'
-      const lastAddress = localStorage.getItem(LAST_CONNECTED_ADDRESS)
+          const wasConnected = localStorage.getItem(WALLET_CONNECTED_KEY) === 'true'
+          const lastAddress = localStorage.getItem(LAST_CONNECTED_ADDRESS)
 
-      if (wasConnected && lastAddress) {
-        const currentAddress = window.tronWeb.defaultAddress.base58
-        if (currentAddress === lastAddress) {
-          setIsConnected(true)
-          await updateWalletInfo()
-          setStatus({
-            message: 'Wallet reconnected successfully.',
-            type: 'success'
-          })
+          if (wasConnected && lastAddress) {
+            const currentAddress = window.tronWeb.defaultAddress?.base58
+            if (currentAddress === lastAddress) {
+              setIsConnected(true)
+              updateWalletInfo()
+              setStatus({
+                message: 'Wallet reconnected successfully.',
+                type: 'success'
+              })
+            } else {
+              setStatus({
+                message: 'Wallet address changed. Please reconnect.',
+                type: 'warning'
+              })
+            }
+          }
+          setIsInitializing(false)
         } else {
-          setStatus({
-            message: 'Wallet address changed. Please reconnect.',
-            type: 'warning'
-          })
+          // If TronLink is not found, check again after a short delay
+          setTimeout(checkTronLink, 1000)
         }
       }
-    } else {
-      setIsTronLinkInstalled(false)
     }
 
-    setIsInitializing(false)
+    checkTronLink()
   }, [updateWalletInfo])
 
+  // useEffect(() => {
+  //   initializeWallet();
+
+  //   // Check user status on page load
+  //   if (walletInfo && !walletInfo.isWhitelisted && !walletInfo.isAdmin) {
+  //     setShowAlert(true);
+  //   }
+  // }, [initializeWallet, walletInfo]);
+
+
   useEffect(() => {
-    initializeWallet();
+    // Add event listener for TronLink ready state
+    const handleTronLinkReady = () => {
+      initializeWallet()
+    }
+
+    window.addEventListener('tronLink#initialized', handleTronLinkReady)
+
+    // Initial check
+    initializeWallet()
 
     // Check user status on page load
     if (walletInfo && !walletInfo.isWhitelisted && !walletInfo.isAdmin) {
       setShowAlert(true);
+
+      return () => {
+        window.removeEventListener('tronLink#initialized', handleTronLinkReady)
+      }
     }
   }, [initializeWallet, walletInfo]);
+
 
   const handleDisconnect = () => {
     setIsConnected(false)
@@ -388,7 +418,7 @@ export default function Home() {
                     </Button>
                   )}
 
-                  
+
                   {walletInfo?.isWhitelisted && (
                     <Button
                       onClick={() => setActiveTab('nftHistory')}
@@ -441,7 +471,7 @@ export default function Home() {
                               className="object-cover w-full h-64"
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                              
+
                             </div>
                           </div>
                         ))
