@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./TronNFTCollection.sol"; // Import the NFT contract
+import "./NFTCertificatesCollection.sol"; // Import the NFT contract
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract TronNFTMinter is ReentrancyGuard, AccessControl {
-    TronNFTCollection private nftContract; // Instance of the TronNFTCollection contract// Whitelist for eligible accounts
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+//import "@openzeppelin/contracts/access/Ownable.sol";
+//import "@openzeppelin/contracts/access/AccessControl.sol";
 
+contract CertificateMinter is ReentrancyGuard {
+    NFTCertificatesCollection private nftContract; // Instance of the TronNFTCollection contract// Whitelist for eligible accounts
+    //bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    address public owner; // Address of the wallet's owner
     uint256 private _tokenIdsCounter;
     mapping(address => uint256) private _nftCount;
     mapping(address => string[]) private _whitelist;
@@ -19,19 +21,15 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
     event NFTMinted(address indexed recipient, uint256 tokenId, string uri);
     event AddressAdminGranted(address indexed account);
 
-    constructor(address _owner) {
-        nftContract = TronNFTCollection(_owner); // Link the NFT contract
-        _grantRole(ADMIN_ROLE, msg.sender); // Assign the deployer as the admin
-    }
-
-    function makeUserAdmin(address account) external onlyAdmin {
-        _grantRole(ADMIN_ROLE, account);
-        emit AddressAdminGranted(account);
-    }
-
+    // Modifier to restrict certain functions to only the contract owner
     modifier onlyAdmin() {
-        require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
+        require(msg.sender == owner, "Only owner may call function");
         _;
+    }
+
+    constructor(address _owner) {
+        owner = payable(msg.sender); // Assign the deployer as the owner
+        nftContract = NFTCertificatesCollection(_owner); // Link the NFT contract
     }
 
     // Admin function to add addresses to the whitelist
@@ -92,22 +90,30 @@ contract TronNFTMinter is ReentrancyGuard, AccessControl {
         emit NFTMinted(msg.sender, tokenId, uri);
     }
 
-    function isWhitelisted(address account) public view returns (bool) {
+    function isWhitelisted(address account) external view returns (bool) {
         return _whitelist[account].length > 0;
     }
 
-    function hasMinted(address account) public view returns (bool) {
+    function hasMinted(address account) external view returns (bool) {
         return _nftCount[account] == _whitelist[account].length;
     }
 
-    function getMintedNFTCount(address account) public view returns (uint256) {
+    function getMintedNFTCount(
+        address account
+    ) external view returns (uint256) {
         return _nftCount[account];
     }
 
     // Retrieve the certificate URI for a given account
     function certificateURI(
         address account
-    ) public view returns (string[] memory) {
+    ) external view returns (string[] memory) {
         return _whitelist[account];
+    }
+
+    // Function to change the owner of the contract
+    function changeOwner(address _newOwnerAddress) external onlyAdmin {
+        owner = _newOwnerAddress;
+        emit AddressAdminGranted(_newOwnerAddress);
     }
 }
