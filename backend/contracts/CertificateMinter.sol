@@ -3,15 +3,12 @@ pragma solidity ^0.8.20;
 
 import "./NFTCertificatesCollection.sol"; // Import the NFT contract
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-//import "@openzeppelin/contracts/access/Ownable.sol";
-//import "@openzeppelin/contracts/access/AccessControl.sol";
-
-contract CertificateMinter is ReentrancyGuard {
+contract CertificateMinter is ReentrancyGuard, AccessControl {
     NFTCertificatesCollection private nftContract; // Instance of the TronNFTCollection contract// Whitelist for eligible accounts
-    //bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    address public owner; // Address of the wallet's owner
     uint256 private _tokenIdsCounter;
     mapping(address => uint256) private _nftCount;
     mapping(address => string[]) private _whitelist;
@@ -21,15 +18,25 @@ contract CertificateMinter is ReentrancyGuard {
     event NFTMinted(address indexed recipient, uint256 tokenId, string uri);
     event AddressAdminGranted(address indexed account);
 
-    // Modifier to restrict certain functions to only the contract owner
-    modifier onlyAdmin() {
-        require(msg.sender == owner, "Only owner may call function");
-        _;
+    constructor(address _nftContract) {
+        require(_nftContract != address(0), "Invalid NFT contract address");
+        nftContract = NFTCertificatesCollection(_nftContract); // Link the NFT contract
+        _grantRole(ADMIN_ROLE, msg.sender); // Assign the deployer as the admin
     }
 
-    constructor(address _owner) {
-        owner = payable(msg.sender); // Assign the deployer as the owner
-        nftContract = NFTCertificatesCollection(_owner); // Link the NFT contract
+    function makeUserAdmin(address account) external onlyAdmin {
+        _grantRole(ADMIN_ROLE, account);
+        emit AddressAdminGranted(account);
+    }
+
+    function revokeAdmin(address account) external onlyAdmin {
+        require(account != msg.sender, "Admins cannot remove themselves"); // Prevent self-revoke
+        _revokeRole(ADMIN_ROLE, account);
+    }
+
+    modifier onlyAdmin() {
+        require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
+        _;
     }
 
     // Admin function to add addresses to the whitelist
@@ -109,11 +116,5 @@ contract CertificateMinter is ReentrancyGuard {
         address account
     ) external view returns (string[] memory) {
         return _whitelist[account];
-    }
-
-    // Function to change the owner of the contract
-    function changeOwner(address _newOwnerAddress) external onlyAdmin {
-        owner = _newOwnerAddress;
-        emit AddressAdminGranted(_newOwnerAddress);
     }
 }

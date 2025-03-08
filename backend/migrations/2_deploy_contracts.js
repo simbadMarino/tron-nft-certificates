@@ -20,13 +20,13 @@ module.exports = async function (deployer, network, accounts) {
   console.log(`CertificateMinter deployed at: ${minterContract.address}`);
 
   // // 3. Grant ADMIN_ROLE to the Minter contract
-  // const ADMIN_ROLE = await nftContract.ADMIN_ROLE(); // Fetch ADMIN_ROLE directly from the contract
-  // await nftContract.grantRole(ADMIN_ROLE, minterContract.address, { from: owner });
-  // console.log(`Granted ADMIN_ROLE to TronNFTMinter: ${minterContract.address}`);
+  //const ADMIN_ROLE = await nftContract.ADMIN_ROLE(); // Fetch ADMIN_ROLE directly from the contract
+  //await nftContract.grantRole(ADMIN_ROLE, minterContract.address, { from: owner });
+  //console.log(`Granted ADMIN_ROLE to TronNFTMinter: ${minterContract.address}`);
 
   // 4. Transfer ownership of the NFT contract to the Minter contract
-  // await nftContract.changeOwner(minterContract.address);
-  // console.log(`Ownership of TronNFTCollection transferred to TronNFTMinter`);
+  await nftContract.changeOwner(minterContract.address);
+  console.log(`Ownership of TronNFTCollection transferred to ${minterContract.address}`);
 
   console.log("Deployment script completed successfully.");
 };
