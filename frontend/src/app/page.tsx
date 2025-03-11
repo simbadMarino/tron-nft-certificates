@@ -9,6 +9,7 @@ import WhitelistManager from './whitelist-manager'
 import BlacklistManager from './blacklist-manager'
 
 const CONTRACT_ADDRESS = "TWMTb7rKsxFPfJJvEygnZgR65CabutJC5b";
+const CONTRACT_ADDRESS_MAINNET = "TUrJAj2MRCc9rFS6CnTeCzB4XueGFKWcph";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
 const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 
@@ -123,10 +124,56 @@ export default function Home() {
             message: 'Contract not found on Nile Testnet' + contractError
           }
         }
-      } else {
+      }
+      else if (network == "Mainnet") {
+        try {
+          console.log("Mainnet network check...")
+          const contract = await window.tronWeb.contract().at(CONTRACT_ADDRESS_MAINNET)
+          const adminRole = await contract.ADMIN_ROLE().call()
+
+          // Check if address has the ADMIN_ROLE
+          const isAdmin = await contract.hasRole(adminRole, address).call()
+          console.log("Is admin?: ", isAdmin);
+
+          // Check if address is whitelisted
+          const isWhitelisted = await contract.isWhitelisted(address).call()
+          console.log('isWhitelisted:', isWhitelisted, 'address:', address)
+
+          // Check if address has minted a certificate
+          const hasMinted = await contract.hasMinted(address).call()
+          console.log('hasMinted:', hasMinted, 'address:', address)
+
+          const uris = await contract.certificateURI(address).call(); // Ensure this returns an array
+          console.log('uris:', uris)
+          const count = await contract.getMintedNFTCount(address).call(); // Fetch minted count
+
+          //cont is in hex
+          const countInt = parseInt(count, 16);
+          //normalize the count
+
+          console.log('count:', countInt)
+          setNftURIs(uris); // Set the state with the fetched array
+          setMintedCount(countInt);
+
+          basicWalletInfo.isAdmin = isAdmin
+          basicWalletInfo.isWhitelisted = isWhitelisted
+          basicWalletInfo.hasMinted = hasMinted
+
+          basicWalletInfo.contractStatus = {
+            isAvailable: true,
+            message: 'Contract connected successfully'
+          }
+        } catch (contractError) {
+          basicWalletInfo.contractStatus = {
+            isAvailable: false,
+            message: 'Contract not found on Mainnet Testnet' + contractError
+          }
+        }
+      }
+      else {
         basicWalletInfo.contractStatus = {
           isAvailable: false,
-          message: 'Contract is only available on Nile Testnet'
+          message: 'Contract is only available on Nile Testnet & Mainnet'
         }
       }
 
@@ -244,7 +291,7 @@ export default function Home() {
           setIsInitializing(false)
         } else {
           // If TronLink is not found, check again after a short delay
-          setTimeout(checkTronLink, 1000)
+          // setTimeout(checkTronLink, 3000)
         }
       }
     }
