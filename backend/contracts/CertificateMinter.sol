@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract CertificateMinter is ReentrancyGuard, AccessControl {
     NFTCertificatesCollection private nftContract; // Instance of the TronNFTCollection contract// Whitelist for eligible accounts
-    bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     uint256 private _tokenIdsCounter;
     mapping(address => uint256) private _nftCount;
