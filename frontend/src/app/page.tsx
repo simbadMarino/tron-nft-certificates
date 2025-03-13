@@ -8,8 +8,8 @@ import Image from 'next/image'
 import WhitelistManager from './whitelist-manager'
 import BlacklistManager from './blacklist-manager'
 
-const CONTRACT_ADDRESS = "TWMTb7rKsxFPfJJvEygnZgR65CabutJC5b";
-const CONTRACT_ADDRESS_MAINNET = "TUrJAj2MRCc9rFS6CnTeCzB4XueGFKWcph";
+const CONTRACT_ADDRESS = "TNU9G3Sx13vUmhmHmxgvum7khaT5h7i2G1";
+const CONTRACT_ADDRESS_MAINNET = "TCbheEmeGn1UpppkcWu2dQUkjwxHx1JfRE";
 const WALLET_CONNECTED_KEY = 'tronlink_connected'
 const LAST_CONNECTED_ADDRESS = 'tronlink_address'
 
@@ -318,16 +318,15 @@ export default function Home() {
     window.addEventListener('tronLink#initialized', handleTronLinkReady)
 
     // Initial check
-    initializeWallet()
+    //initializeWallet()
 
     // Check user status on page load
     if (walletInfo && !walletInfo.isWhitelisted && !walletInfo.isAdmin) {
       setShowAlert(true);
-
-      return () => {
-        window.removeEventListener('tronLink#initialized', handleTronLinkReady)
-      }
     }
+    return () => {
+      window.removeEventListener('tronLink#initialized', handleTronLinkReady)
+    };
   }, [initializeWallet, walletInfo]);
 
 
